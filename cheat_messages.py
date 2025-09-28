@@ -21,11 +21,11 @@ class EnhancedCheatMessages:
         }
         
         self.replay_messages = [
-            "📺 Screen recording detected! Please use live camera feed only, not recorded videos.",
-            "🚨 Video replay attack identified. This assessment requires real-time performance.",
-            "⚠️ Digital screen detected in video. Ensure you're not recording another device.",
-            "🔍 Suspicious video artifacts found. Use your device's camera directly.",
-            "🛡️ Anti-cheat system triggered - potential pre-recorded video detected."
+            "Screen recording detected! Please use live camera feed only.",
+            "Video replay attack identified. This requires real-time performance.",
+            "Digital screen detected in video. Ensure you're not recording another device.",
+            "Suspicious video artifacts found. Use your device's camera directly.",
+            "Screen/replay detection triggered - use live camera only."
         ]
         
         self.multiple_face_messages = [
@@ -36,10 +36,10 @@ class EnhancedCheatMessages:
         ]
         
         self.no_face_messages = [
-            "😕 Face not visible. Please position yourself in front of the camera.",
-            "📹 No face detected. Ensure proper lighting and camera positioning.",
-            "⚠️ You've moved out of camera view. Stay visible throughout the assessment.",
-            "🔍 Face detection lost. Maintain clear visibility for identity verification."
+            "Face not visible. Please position yourself in front of the camera for verification.",
+            "No face detected during initial verification. Ensure proper lighting and camera positioning.",
+            "Face required for initial identity verification. Please stay visible.",
+            "Face detection needed for verification. Maintain clear visibility."
         ]
         
         self.lighting_messages = {

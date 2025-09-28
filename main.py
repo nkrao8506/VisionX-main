@@ -44,7 +44,7 @@ cap.set(3, 800)  # width
 cap.set(4, 480)  # height
 
 user_id = "test_user_123"  # Get from your authentication system
-registered_photo = r"C:\Users\nanin\OneDrive\Pictures\Camera Roll\WIN_20250926_11_56_12_Pro.jpg" #UPDATE THE PATH TO A PHOTO ON YOUR SYSTEM
+registered_photo = r"C:\Users\durga\Pictures\Camera Roll\WIN_20250926_13_08_15_Pro.jpg" #UPDATE THE PATH TO A PHOTO ON YOUR SYSTEM
 
 # Initialize systems
 cheat_detector = EnhancedCheatDetector(user_id, registered_photo)
@@ -100,12 +100,23 @@ with mp_pose.Pose(min_detection_confidence=0.5,
                         print(f"Error displaying warning message: {msg_error}")
                         cv2.putText(frame, "Security monitoring active", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
                 
-                # Display liveness status
+                # Display face verification status (only during initial verification)
+                if cheat_detector.frame_count <= cheat_detector.initial_verification_frames and not cheat_detector.face_verified_once:
+                    cv2.putText(frame, f"Verifying identity... {cheat_detector.frame_count}/{cheat_detector.initial_verification_frames}", 
+                               (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
+                elif cheat_detector.face_verified_once:
+                    cv2.putText(frame, "Identity Verified - Monitoring Active", (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                
+                # Display liveness status (always active)
                 liveness_status = detection_results.get('liveness_status', 'unknown')
                 if detection_results.get('fake_face_detected', False):
                     cv2.putText(frame, "FAKE FACE DETECTED!", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
                 elif liveness_status == 'real':
-                    cv2.putText(frame, "Real Face Verified", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    cv2.putText(frame, "Real Face Detected", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                    
+                # Display replay detection status
+                if detection_results.get('replay_detected', False):
+                    cv2.putText(frame, "SCREEN/REPLAY DETECTED!", (10, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
 
                 if detection_results['face_verified']:
