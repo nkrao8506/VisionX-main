@@ -24,10 +24,10 @@ class ComprehensiveCheatDetector:
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         
         # Thresholds and counters
-        self.face_match_threshold = 0.6  # Lower = stricter, but tolerance increased to pose/lighting variations
+        self.face_match_threshold = 0.7  # Lower = stricter, but tolerance increased to pose/lighting variations
         self.replay_confidence_threshold = 0.7
-        self.max_violations = 3
-        self.max_no_face_frames = 90  # 3 second at 30fps
+        self.max_violations = 5
+        self.max_no_face_frames = 120  # 3 second at 30fps
         
         # Violation tracking
         self.violation_counts = {

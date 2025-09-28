@@ -103,27 +103,47 @@ class EnhancedCheatMessages:
     
     def format_comprehensive_message(self, results: Dict) -> str:
         """Format a comprehensive message based on detection results"""
-        messages = []
-        
-        if not results['session_active']:
-            return self.get_blocked_message()
-        
-        if results['violations']:
-            for violation in results['violations']:
-                if 'Identity mismatch' in violation:
-                    messages.append(self.get_identity_message())
-                elif 'replay detected' in violation:
-                    messages.append(self.get_replay_message())
-                elif 'Multiple faces' in violation:
-                    messages.append(self.get_multiple_face_message())
-                elif 'No face detected' in violation:
-                    messages.append(self.get_no_face_message())
-        
-        if results['warnings']:
-            for warning in results['warnings']:
-                if 'dark' in warning.lower():
-                    messages.append(self.get_lighting_message('too_dark'))
-                elif 'bright' in warning.lower():
-                    messages.append(self.get_lighting_message('too_bright'))
-        
-        return messages[0] if messages else results['message']
+        try:
+            messages = []
+            
+            if not results.get('session_active', True):
+                return self.get_blocked_message()
+            
+            # Handle violations
+            if results.get('violations'):
+                for violation in results['violations']:
+                    if 'Identity' in str(violation) or 'mismatch' in str(violation):
+                        messages.append(self.get_identity_message())
+                    elif 'replay' in str(violation).lower():
+                        messages.append(self.get_replay_message())
+                    elif 'Multiple' in str(violation) or 'faces' in str(violation):
+                        messages.append(self.get_multiple_face_message())
+                    elif 'face' in str(violation).lower() and 'not' in str(violation).lower():
+                        messages.append(self.get_no_face_message())
+                    elif 'fake' in str(violation).lower():
+                        messages.append("🚨 Fake face detected! Please use real face.")
+                    else:
+                        messages.append(f"Security Alert: {violation}")
+            
+            # Handle warnings
+            if results.get('warnings'):
+                for warning in results['warnings']:
+                    warning_str = str(warning).lower()
+                    if 'dark' in warning_str:
+                        messages.append(self.get_lighting_message('too_dark'))
+                    elif 'bright' in warning_str:
+                        messages.append(self.get_lighting_message('too_bright'))
+                    else:
+                        messages.append(f"Warning: {warning}")
+            
+            # Return first message or default
+            if messages:
+                return messages[0]
+            elif results.get('fake_face_detected', False):
+                return "🚨 Fake face detected! Please use real face."
+            else:
+                return "System monitoring active"
+                
+        except Exception as e:
+            print(f"Error formatting message: {e}")
+            return "System monitoring active"

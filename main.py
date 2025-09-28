@@ -44,7 +44,7 @@ cap.set(3, 800)  # width
 cap.set(4, 480)  # height
 
 user_id = "test_user_123"  # Get from your authentication system
-registered_photo = r"C:\Users\durga\Pictures\Camera Roll\WIN_20250926_13_08_15_Pro.jpg" #UPDATE THE PATH TO A PHOTO ON YOUR SYSTEM
+registered_photo = r"C:\Users\nanin\OneDrive\Pictures\Camera Roll\WIN_20250926_11_56_12_Pro.jpg" #UPDATE THE PATH TO A PHOTO ON YOUR SYSTEM
 
 # Initialize systems
 cheat_detector = EnhancedCheatDetector(user_id, registered_photo)
@@ -90,10 +90,15 @@ with mp_pose.Pose(min_detection_confidence=0.5,
                     break
                 
                 # Display appropriate messages
-                if detection_results['violations'] or detection_results['warnings']:
-                    message = message_handler.format_comprehensive_message(detection_results)
-                    cv2.putText(frame, message, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, detection_results['overlay_color'], 2)
-                    print(f"WARNING: {message}")
+                if detection_results.get('violations') or detection_results.get('warnings'):
+                    try:
+                        message = message_handler.format_comprehensive_message(detection_results)
+                        overlay_color = detection_results.get('overlay_color', (255, 255, 0))
+                        cv2.putText(frame, message, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, overlay_color, 2)
+                        print(f"WARNING: {message}")
+                    except Exception as msg_error:
+                        print(f"Error displaying warning message: {msg_error}")
+                        cv2.putText(frame, "Security monitoring active", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 0), 2)
                 
                 # Display liveness status
                 liveness_status = detection_results.get('liveness_status', 'unknown')
