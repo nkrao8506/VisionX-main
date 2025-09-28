@@ -66,6 +66,11 @@ class EnhancedCheatDetector:
         self.no_face_frame_count = 0
         self.consecutive_fake_detections = 0
         
+        # Face verification tracking (only verify once at beginning)
+        self.face_verified_once = False
+        self.initial_verification_frames = 90  # Check face for first 3 seconds (30fps)
+        self.frame_count = 0
+        
         # Load registered face if provided
         if registered_photo_path and os.path.exists(registered_photo_path):
             self.load_registered_face(registered_photo_path)
@@ -208,16 +213,17 @@ class EnhancedCheatDetector:
             Dictionary with detection results and session status
         """
         current_time = time.time()
+        self.frame_count += 1
         
         # Initialize result structure
         result = {
             'session_active': self.session_active,
-            'face_verified': False,
+            'face_verified': self.face_verified_once,
             'violations': [],
             'warnings': [],
             'overlay_color': (255, 255, 255),  # White default
             'liveness_status': 'unknown',
-            'identity_verified': False,
+            'identity_verified': self.face_verified_once,
             'replay_detected': False,
             'fake_face_detected': False
         }
@@ -250,48 +256,62 @@ class EnhancedCheatDetector:
                 result['liveness_status'] = 'real'
                 result['overlay_color'] = (0, 255, 0)  # Green
         
-        # 2. IDENTITY VERIFICATION
-        faces = self.detect_faces_in_frame(frame)
-        
-        if len(faces) == 0:
-            self.no_face_frame_count += 1
-            result['warnings'].append("No face detected")
+        # 2. IDENTITY VERIFICATION (Only during initial frames)
+        if not self.face_verified_once and self.frame_count <= self.initial_verification_frames:
+            faces = self.detect_faces_in_frame(frame)
             
-            if self.no_face_frame_count > self.max_no_face_frames:
-                self.violation_counts['no_face_detected'] += 1
-                result['violations'].append("Face required for verification")
+            if len(faces) == 0:
+                self.no_face_frame_count += 1
+                result['warnings'].append("No face detected - initial verification needed")
                 
-        elif len(faces) > 1:
-            self.violation_counts['multiple_faces'] += 1
-            result['violations'].append("Multiple faces detected")
-            result['overlay_color'] = (0, 165, 255)  # Orange
-            
-        else:
-            # Single face detected
-            self.no_face_frame_count = 0
-            self.last_face_detection = current_time
-            
-            face = faces[0]
-            
-            # Verify identity
-            if self.registered_encoding is not None:
-                is_match, confidence = self.verify_identity(face['encoding'])
+                if self.no_face_frame_count > self.max_no_face_frames:
+                    self.violation_counts['no_face_detected'] += 1
+                    result['violations'].append("Face required for initial verification")
+                    
+            elif len(faces) > 1:
+                self.violation_counts['multiple_faces'] += 1
+                result['violations'].append("Multiple faces detected during verification")
+                result['overlay_color'] = (0, 165, 255)  # Orange
                 
-                if is_match:
-                    result['face_verified'] = True
-                    result['identity_verified'] = True
-                    if result['overlay_color'] == (255, 255, 255):  # Only if not set by liveness
-                        result['overlay_color'] = (0, 255, 0)  # Green
-                else:
-                    self.violation_counts['wrong_person'] += 1
-                    result['violations'].append(f"Identity verification failed (confidence: {confidence:.2f})")
-                    result['overlay_color'] = (0, 0, 255)  # Red
+            else:
+                # Single face detected during initial verification
+                self.no_face_frame_count = 0
+                self.last_face_detection = current_time
+                
+                face = faces[0]
+                
+                # Verify identity only once
+                if self.registered_encoding is not None:
+                    is_match, confidence = self.verify_identity(face['encoding'])
+                    
+                    if is_match:
+                        self.face_verified_once = True  # Set the flag
+                        result['face_verified'] = True
+                        result['identity_verified'] = True
+                        if result['overlay_color'] == (255, 255, 255):  # Only if not set by liveness
+                            result['overlay_color'] = (0, 255, 0)  # Green
+                        self.logger.info(f"Face verified successfully at frame {self.frame_count}")
+                    else:
+                        self.violation_counts['wrong_person'] += 1
+                        result['violations'].append(f"Identity verification failed (confidence: {confidence:.2f})")
+                        result['overlay_color'] = (0, 0, 255)  # Red
         
-        # 3. REPLAY DETECTION
+        elif self.face_verified_once:
+            # Face already verified, skip identity checks but keep result updated
+            result['face_verified'] = True
+            result['identity_verified'] = True
+        
+        elif self.frame_count > self.initial_verification_frames and not self.face_verified_once:
+            # Verification period ended without successful verification
+            result['violations'].append("Initial face verification failed - session blocked")
+            self.session_active = False
+            result['session_active'] = False
+        
+        # 3. REPLAY DETECTION (always active throughout video)
         is_replay, replay_confidence = self.detect_replay_attack(frame)
         if is_replay:
             self.violation_counts['replay_detected'] += 1
-            result['violations'].append(f"Replay attack detected (confidence: {replay_confidence:.2f})")
+            result['violations'].append(f"Screen/replay attack detected (confidence: {replay_confidence:.2f})")
             result['replay_detected'] = True
             result['overlay_color'] = (0, 0, 255)  # Red
         
