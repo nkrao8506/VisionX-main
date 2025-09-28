@@ -1,0 +1,29 @@
+Flask
+jupyter
+mediapipe
+numpy
+opencv-python
+pandas
+
+# PyTorch (for CPU or GPU; use only ONE, here CPU for compatibility)
+torch==2.6.0
+
+# TorchVision and Torchaudio useful for multimedia
+torchvision==0.21.0
+torchaudio==2.6.0
+
+# Huggingface Transformers for NLP pipeline
+#transformers==4.51.3
+
+# (Optional, if you use in feedback pipeline)
+scikit-learn==1.4.2
+
+# TensorFlow for liveness detection
+tensorflow
+
+# Face recognition library
+face_recognition
+
+# Additional utilities
+imutils
+pickle-mixin
